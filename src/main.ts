@@ -14,10 +14,10 @@
 
 import "./style.css";
 
-import { fromEvent, interval, merge } from "rxjs";
+import { fromEvent, interval, merge, Observable, Subscription } from "rxjs";
 import { map, filter, scan } from "rxjs/operators";
-import { Tick, initialState, reduceState} from './state';
-import {Viewport, Constants, Block, Key, Event, State} from './type'
+import { Tick, initialState, reduceState, Movement} from './state';
+import {Viewport, Constants, Block, Key, Event, State, Action} from './type'
 import {render, gameover, show, hide} from './view'
 
 /** Utility functions */
@@ -60,47 +60,31 @@ export function main() {
   const fromKey = (keyCode: Key) =>
     key$.pipe(filter(({ code }) => code === keyCode));
 
-  const left$ = fromKey("KeyA");
-  const right$ = fromKey("KeyD");
-  const down$ = fromKey("KeyS");
+  const left$ = fromKey("KeyA").pipe(map(_ => new Movement(-1, 0)));
+  const right$ = fromKey("KeyD").pipe(map(_ => new Movement(1, 0)));
+  const down$ = fromKey("KeyS").pipe(map(_ => new Movement(0, 1)));
 
-  const action$ = merge(left$, right$, down$)
+  const movement$ = merge(left$, right$, down$)
 
-  /**
- * Updates the state by user input.
- *
- * @param s Current state
- * @returns Updated state
- */
-const action = (s: State, action: Key) => {
-  if (!s.gameEnd) {
-    if (action === "KeyA") {
-      return {...s, position: s.position.x - 1}
-    } else if (action === "KeyD") {
-      return {...s, position: s.position.x + 1}
-    } else if (action === "KeyS") {
-      return {...s, position: s.position.y - 1}
-    }
-  }
-  return s
-};
+   /** Determines the rate of time steps */
+   const tick$ = interval(Constants.TICK_RATE_MS).pipe(map(elapsed => new Tick()))
 
   /** Observables */
+  const event$ : Observable<Action> = merge(tick$, movement$)
+  const state$ : Observable<State> = event$.pipe(scan(reduceState, initialState))
+  const subscription: Subscription = state$.subscribe(render)
 
-  /** Determines the rate of time steps */
-  const tick$ = interval(Constants.TICK_RATE_MS);
-
-  const source$ = merge(tick$)
-    .pipe(scan((s: State) => tick(s), initialState))
-    .subscribe((s: State) => {
-      render(s);
+  // const source$ = merge(tick$)
+  //   .pipe(scan((s: State) => tick(s), initialState))
+  //   .subscribe((s: State) => {
+  //     render(s);
       
-      if (s.gameEnd) {
-        show(gameover);
-      } else {
-        hide(gameover);
-      }
-    });
+  //     if (s.gameEnd) {
+  //       show(gameover);
+  //     } else {
+  //       hide(gameover);
+  //     }
+  //   });
 }
 
 // The following simply runs your main function on window load.  Make sure to leave it in place.

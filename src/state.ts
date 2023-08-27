@@ -1,4 +1,4 @@
-export { initialState, reduceState, Tick}
+export { initialState, reduceState, Tick, Movement}
 import {State, Action} from "./type.ts" 
 
 
@@ -24,6 +24,13 @@ class Tick implements Action {
         }
         return s
       }
-  }
+}
+
+class Movement implements Action {
+    constructor(public readonly x: number, public readonly y: number) {}
+    apply(s: State): State {
+        return {...s, position: {x: s.position.x + this.x, y: s.position.y + this.y}}
+    }
+}
 
 const reduceState = (s: State, action: Action) => action.apply(s);

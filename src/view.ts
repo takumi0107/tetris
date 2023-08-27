@@ -66,27 +66,27 @@ const hide = (elem: SVGGraphicsElement) =>
  * @param s Current state
  */
 const render = (s: State) => {
+    console.log('test')
+    svg.innerHTML = ''
 
-svg.innerHTML = ''
+    const squareDetails = [
+      { x: 0, y: 0, color: "green" },
+      { x: 1, y: 0, color: "green" },
+      { x: 0, y: 1, color: "green" },
+      { x: 1, y: 1, color: "green" },
+    ];
 
-const squareDetails = [
-  { x: 0, y: 0, color: "green" },
-  { x: 1, y: 0, color: "green" },
-  { x: 0, y: 1, color: "green" },
-  { x: 1, y: 1, color: "green" },
-];
-
-const square = squareDetails.map((squareDetail) => {
-  const cube = createSvgElement(svg.namespaceURI, "rect", {
-    height: `${Block.HEIGHT}`,
-    width: `${Block.WIDTH}`,
-    x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
-    y: `${(squareDetail.y + s.position.y) * Block.HEIGHT}`,
-    style: `fill: ${squareDetail.color}`,
-  });
-  svg.appendChild(cube);
-  return cube;
-});
+    const square = squareDetails.map((squareDetail) => {
+      const cube = createSvgElement(svg.namespaceURI, "rect", {
+        height: `${Block.HEIGHT}`,
+        width: `${Block.WIDTH}`,
+        x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
+        y: `${(squareDetail.y + s.position.y) * Block.HEIGHT}`,
+        style: `fill: ${squareDetail.color}`,
+      });
+      svg.appendChild(cube);
+      return cube;
+    });
 
     // Add blocks to the main grid canvas
     // const cube = createSvgElement(svg.namespaceURI, "rect", {
@@ -107,4 +107,4 @@ const square = squareDetails.map((squareDetail) => {
       style: "fill: green",
     });
     preview.appendChild(cubePreview);
-  };
+};
