@@ -1,3 +1,4 @@
+import { initialState } from './state';
 import { State, Viewport, Constants, Block } from './type'
 export {render, gameover, show, hide}
 /**
@@ -57,7 +58,20 @@ const show = (elem: SVGGraphicsElement) => {
    */
 const hide = (elem: SVGGraphicsElement) =>
   elem.setAttribute("visibility", "hidden");
+class Floor {
+  private floorBlocks: Set<string>;
+  constructor() {
+    this.floorBlocks = new Set(); 
+  }
 
+  addBlock(x: number, y: number) {
+    this.floorBlocks.add(`${x},${y}`);
+  }
+
+  isPartOfFloor(x: number, y: number) {
+    return this.floorBlocks.has(`${x},${y}`);
+  }
+}
 /**
  * Renders the current state to the canvas.
  *
@@ -66,8 +80,16 @@ const hide = (elem: SVGGraphicsElement) =>
  * @param s Current state
  */
 const render = (s: State) => {
-    console.log('test')
+    
     svg.innerHTML = ''
+
+    const floor = createSvgElement(svg.namespaceURI, "rect", {
+      height: `${Block.HEIGHT}`,
+      width: `${Viewport.CANVAS_WIDTH}`,
+      x: "0",
+      y: `${Viewport.CANVAS_HEIGHT}`,
+    })
+    svg.appendChild(floor)
 
     const squareDetails = [
       { x: 0, y: 0, color: "green" },
@@ -76,17 +98,41 @@ const render = (s: State) => {
       { x: 1, y: 1, color: "green" },
     ];
 
-    const square = squareDetails.map((squareDetail) => {
+    // const square = squareDetails.map((squareDetail) => {
+    //   if((squareDetail.y + s.position.y) * Block.HEIGHT > Viewport.CANVAS_HEIGHT) {
+    //     const cube = createSvgElement(svg.namespaceURI, "rect", {
+    //       height: `${Block.HEIGHT}`,
+    //       width: `${Block.WIDTH}`,
+    //       x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
+    //       y: `${(Viewport.CANVAS_HEIGHT) - Block.HEIGHT}`,
+    //       style: `fill: ${squareDetail.color}`,
+    //     });
+    //     svg.appendChild(cube);
+    //     return cube;
+    //   } else {
+    //     const cube = createSvgElement(svg.namespaceURI, "rect", {
+    //       height: `${Block.HEIGHT}`,
+    //       width: `${Block.WIDTH}`,
+    //       x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
+    //       y: `${(squareDetail.y + s.position.y) * Block.HEIGHT}`,
+    //       style: `fill: ${squareDetail.color}`,
+    //     });
+    //     svg.appendChild(cube);
+    //     return cube;
+    //   }
+      
+    // });
+
+    s.tetrominos.forEach(tetorino=> {
       const cube = createSvgElement(svg.namespaceURI, "rect", {
         height: `${Block.HEIGHT}`,
         width: `${Block.WIDTH}`,
-        x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
-        y: `${(squareDetail.y + s.position.y) * Block.HEIGHT}`,
-        style: `fill: ${squareDetail.color}`,
-      });
+        x: `${tetorino.position.x * Block.WIDTH}`,
+        y: `${tetorino.position.y * Block.HEIGHT}`,
+        style: "fill: green"
+      })
       svg.appendChild(cube);
-      return cube;
-    });
+    })
 
     // Add blocks to the main grid canvas
     // const cube = createSvgElement(svg.namespaceURI, "rect", {

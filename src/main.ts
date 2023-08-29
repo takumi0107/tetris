@@ -20,33 +20,6 @@ import { Tick, initialState, reduceState, Movement} from './state';
 import {Viewport, Constants, Block, Key, Event, State, Action} from './type'
 import {render, gameover, show, hide} from './view'
 
-/** Utility functions */
-/**
- * state transducer
- * @param s input State
- * @param action type of action to apply to the State
- * @returns a new State 
- */
-
-/**
- * Updates the state by proceeding with one time step.
- *
- * @param s Current state
- * @returns Updated state
- */
-const tick = (s: State) => {
-  if (!s.gameEnd) {
-    const newPosition = {
-      x: s.position.x,
-      y: s.position.y + 1,
-    };
-    return {...s, position: newPosition}
-  }
-  return s
-};
-
-
-
 /**
  * This is the function called on page load. Your main game loop
  * should be called here.
@@ -73,18 +46,6 @@ export function main() {
   const event$ : Observable<Action> = merge(tick$, movement$)
   const state$ : Observable<State> = event$.pipe(scan(reduceState, initialState))
   const subscription: Subscription = state$.subscribe(render)
-
-  // const source$ = merge(tick$)
-  //   .pipe(scan((s: State) => tick(s), initialState))
-  //   .subscribe((s: State) => {
-  //     render(s);
-      
-  //     if (s.gameEnd) {
-  //       show(gameover);
-  //     } else {
-  //       hide(gameover);
-  //     }
-  //   });
 }
 
 // The following simply runs your main function on window load.  Make sure to leave it in place.
