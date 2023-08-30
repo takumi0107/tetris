@@ -1,4 +1,4 @@
-export type {State, Action, Key, Event, Tetromino}
+export type {State, Action, Key, Event, Tetromino, Position}
 export {Viewport, Constants, Block}
 
 
@@ -27,16 +27,20 @@ type Key = "KeyS" | "KeyA" | "KeyD";
 
 type Event = "keydown" | "keyup" | "keypress";
 
+type Position = { x: number; y: number };
+
 type Tetromino = Readonly<{
-    id: number,
-    isStacked: boolean
-    position: {x: number, y: number}
+    id: number
+    shape: Position[]
+    color: String
+    position: Position
 }>
 
 
 type State = Readonly<{
     gameEnd: boolean;
     tetrominos: ReadonlyArray<Tetromino>
+    activeTetrominoId: number
 }>;
 
 interface Action {

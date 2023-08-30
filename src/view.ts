@@ -1,5 +1,5 @@
 import { initialState } from './state';
-import { State, Viewport, Constants, Block } from './type'
+import { State, Viewport, Constants, Block, Tetromino } from './type'
 export {render, gameover, show, hide}
 /**
  * Creates an SVG element with the given properties.
@@ -122,16 +122,17 @@ const render = (s: State) => {
     //   }
       
     // });
-
-    s.tetrominos.forEach(tetorino=> {
-      const cube = createSvgElement(svg.namespaceURI, "rect", {
-        height: `${Block.HEIGHT}`,
-        width: `${Block.WIDTH}`,
-        x: `${tetorino.position.x * Block.WIDTH}`,
-        y: `${tetorino.position.y * Block.HEIGHT}`,
-        style: "fill: green"
+    s.tetrominos.forEach(tetromino=> {
+      tetromino.shape.map((shape_pos) => {
+          const cube = createSvgElement(svg.namespaceURI, "rect", {
+            height: `${Block.HEIGHT}`,
+            width: `${Block.WIDTH}`,
+            x: `${(shape_pos.x + tetromino.position.x) * Block.WIDTH}`,
+            y: `${(shape_pos.y + tetromino.position.y) * Block.HEIGHT}`,
+            style: "fill: green"
+          })
+          svg.appendChild(cube);
       })
-      svg.appendChild(cube);
     })
 
     // Add blocks to the main grid canvas
