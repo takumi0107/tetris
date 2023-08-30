@@ -26,23 +26,32 @@ class Tick implements Action {
         if (!s.gameEnd) {
           const activeTetrominos = s.tetrominos.filter((tetromino) => tetromino.id == s.activeTetrominoId)
           const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-          const stackedActiveTetrominos = activeTetrominos.filter((tetromino) => ((tetromino.position.y + 2) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT)
-          const stackedOnTetrominos = () => {
-            return activeTetrominos.some((active) => {
-              return stackedTetrominos.some((stacked) => {
-                return active.shape.some((activeShape) => {
-                  return stacked.shape.some((stackedShape) => {
-                    return (
-                      activeShape.x + active.position.x === stackedShape.x + stacked.position.x && 
-                      activeShape.y + active.position.y + 1 === stackedShape.y + stacked.position.y
-                      )
+          const stackedActiveTetrominos = activeTetrominos.some((tetromino) => ((tetromino.position.y + 2) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT)
+          const stackedOnTetrominos = activeTetrominos.some((active) => {
+                return stackedTetrominos.some((stacked) => {
+                  return active.shape.some((activeShape) => {
+                    return stacked.shape.some((stackedShape) => {
+                      return (
+                        activeShape.x + active.position.x === stackedShape.x + stacked.position.x && 
+                        activeShape.y + active.position.y + 1 === stackedShape.y + stacked.position.y
+                        )
+                    })
                   })
-                })
-              });
-            });
-          };
+                });
+              })
+          
+          const tetrominosExceeded = stackedTetrominos.some((tetromino) =>
+            tetromino.shape.some((shapePos) =>
+              shapePos.y + tetromino.position.y <= 0
+            )
+          );
 
-          if (stackedActiveTetrominos.length != 0 || stackedOnTetrominos()) {
+          console.log(tetrominosExceeded)
+          if (tetrominosExceeded) {
+            return {...s, gameEnd: true}
+          }
+
+          if (stackedActiveTetrominos || stackedOnTetrominos) {
             const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
             return {...s, tetrominos: [...s.tetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1}
           } else {
@@ -61,10 +70,9 @@ class Movement implements Action {
     apply(s: State): State {
       const activeTetrominos = s.tetrominos.filter((tetromino) => tetromino.id == s.activeTetrominoId)
       const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-      const stackedActiveTetrominos = activeTetrominos.filter((tetromino) => ((tetromino.position.y + 2) * Block.HEIGHT) >= Viewport.CANVAS_HEIGHT)
+      const stackedActiveTetrominos = activeTetrominos.some((tetromino) => ((tetromino.position.y + 2) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT)
 
-      const stackedOnTetrominos = () => {
-        return activeTetrominos.some((active) => {
+      const stackedOnTetrominos = activeTetrominos.some((active) => {
           return stackedTetrominos.some((stacked) => {
             return active.shape.some((activeShape) => {
               return stacked.shape.some((stackedShape) => {
@@ -75,9 +83,9 @@ class Movement implements Action {
               })
             })
           });
-        });
-      };
-      if (stackedActiveTetrominos.length != 0 || stackedOnTetrominos()) {
+      });
+
+      if (stackedActiveTetrominos || stackedOnTetrominos) {
         const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
         return {...s, tetrominos: [...s.tetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1}
       } else {
