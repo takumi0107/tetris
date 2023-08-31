@@ -46,7 +46,6 @@ class Tick implements Action {
             )
           );
 
-          console.log(tetrominosExceeded)
           if (tetrominosExceeded) {
             return {...s, gameEnd: true}
           }
@@ -84,6 +83,16 @@ class Movement implements Action {
             })
           });
       });
+
+      const tetrominosExceeded = stackedTetrominos.some((tetromino) =>
+        tetromino.shape.some((shapePos) =>
+          shapePos.y + tetromino.position.y <= 0
+        )
+      );
+      
+      if (tetrominosExceeded) {
+        return {...s, gameEnd: true}
+      }
 
       if (stackedActiveTetrominos || stackedOnTetrominos) {
         const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})

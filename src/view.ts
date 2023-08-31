@@ -1,4 +1,4 @@
-import { initialState } from './state';
+import "./style.css";
 import { State, Viewport, Constants, Block, Tetromino } from './type'
 export {render, gameover, show, hide}
 /**
@@ -16,19 +16,19 @@ const createSvgElement = (
     namespace: string | null,
     name: string,
     props: Record<string, string> = {}
-  ) => {
+) => {
     const elem = document.createElementNS(namespace, name) as SVGElement;
     Object.entries(props).forEach(([k, v]) => elem.setAttribute(k, v));
     return elem;
-  };
+};
 
 // Canvas elements
 const svg = document.querySelector("#svgCanvas") as SVGGraphicsElement &
-  HTMLElement;
+HTMLElement;
 const preview = document.querySelector("#svgPreview") as SVGGraphicsElement &
-  HTMLElement;
+HTMLElement;
 const gameover = document.querySelector("#gameOver") as SVGGraphicsElement &
-  HTMLElement;
+HTMLElement;
 const container = document.querySelector("#main") as HTMLElement;
 
 svg.setAttribute("height", `${Viewport.CANVAS_HEIGHT}`);
@@ -49,8 +49,8 @@ const highScoreText = document.querySelector("#highScoreText") as HTMLElement;
  */
 const show = (elem: SVGGraphicsElement) => {
     elem.setAttribute("visibility", "visible");
-    elem.parentNode!.appendChild(elem);
-  };
+    elem.parentNode!.appendChild(elem);;
+};
   
   /**
    * Hides a SVG element on the canvas.
@@ -80,48 +80,10 @@ class Floor {
  * @param s Current state
  */
 const render = (s: State) => {
-    
-    svg.innerHTML = ''
+    // svg.innerHTML = ''
+    const childrenToRemove = Array.from(svg.children).filter(child => child != gameover);
+    childrenToRemove.forEach(child => svg.removeChild(child));
 
-    const floor = createSvgElement(svg.namespaceURI, "rect", {
-      height: `${Block.HEIGHT}`,
-      width: `${Viewport.CANVAS_WIDTH}`,
-      x: "0",
-      y: `${Viewport.CANVAS_HEIGHT}`,
-    })
-    svg.appendChild(floor)
-
-    const squareDetails = [
-      { x: 0, y: 0, color: "green" },
-      { x: 1, y: 0, color: "green" },
-      { x: 0, y: 1, color: "green" },
-      { x: 1, y: 1, color: "green" },
-    ];
-
-    // const square = squareDetails.map((squareDetail) => {
-    //   if((squareDetail.y + s.position.y) * Block.HEIGHT > Viewport.CANVAS_HEIGHT) {
-    //     const cube = createSvgElement(svg.namespaceURI, "rect", {
-    //       height: `${Block.HEIGHT}`,
-    //       width: `${Block.WIDTH}`,
-    //       x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
-    //       y: `${(Viewport.CANVAS_HEIGHT) - Block.HEIGHT}`,
-    //       style: `fill: ${squareDetail.color}`,
-    //     });
-    //     svg.appendChild(cube);
-    //     return cube;
-    //   } else {
-    //     const cube = createSvgElement(svg.namespaceURI, "rect", {
-    //       height: `${Block.HEIGHT}`,
-    //       width: `${Block.WIDTH}`,
-    //       x: `${(squareDetail.x + s.position.x) * Block.WIDTH}`,
-    //       y: `${(squareDetail.y + s.position.y) * Block.HEIGHT}`,
-    //       style: `fill: ${squareDetail.color}`,
-    //     });
-    //     svg.appendChild(cube);
-    //     return cube;
-    //   }
-      
-    // });
     s.tetrominos.forEach(tetromino=> {
       tetromino.shape.map((shape_pos) => {
           const cube = createSvgElement(svg.namespaceURI, "rect", {
@@ -154,4 +116,10 @@ const render = (s: State) => {
       style: "fill: green",
     });
     preview.appendChild(cubePreview);
+
+    if(s.gameEnd) {
+      show(gameover)
+    } else {
+      hide(gameover)
+    }
 };
