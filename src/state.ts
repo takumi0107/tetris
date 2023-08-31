@@ -1,16 +1,18 @@
 export { initialState, reduceState, Tick, Movement}
 import {State, Action, Viewport, Block, Tetromino, Position} from "./type.ts" 
 
-const createTetorimino = (id: number, shape: Position[], color: String, position: {x: number, y: number}) : Tetromino => ({
+const createTetorimino = (id: number, shape: Position[], color: String, position: {x: number, y: number}, height: number, width: number) : Tetromino => ({
   id: id,
   shape: shape,
   color: color,
-  position: position
+  position: position,
+  height: height,
+  width: width
 })
 
 const initialState: State = {
     gameEnd: false,
-    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "green", {x: 0, y: -1})],
+    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "green", {x: 0, y: -1}, 2, 2)],
     activeTetrominoId: 1
 } as const;
 
@@ -27,7 +29,7 @@ class Tick implements Action {
           const activeTetromino = s.tetrominos.find((tetromino) => tetromino.id == s.activeTetrominoId)
           if (activeTetromino) {
             const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-            const stackedActiveTetrominos =  ((activeTetromino.position.y + 2) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
+            const stackedActiveTetrominos =  ((activeTetromino.position.y + activeTetromino.height) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
             const stackedOnTetrominos = stackedTetrominos.some((stacked) => {
                     return activeTetromino.shape.some((activeShape) => {
                       return stacked.shape.some((stackedShape) => {
@@ -50,7 +52,7 @@ class Tick implements Action {
             }
   
             if (stackedActiveTetrominos || stackedOnTetrominos) {
-              const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
+              const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0}, 2, 2)
               return {...s, tetrominos: [...s.tetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1}
             } else {
                 activeTetromino.position.y = activeTetromino.position.y + 1
@@ -69,7 +71,7 @@ class Movement implements Action {
         const activeTetromino = s.tetrominos.find((tetromino) => tetromino.id == s.activeTetrominoId)
         if (activeTetromino) {
           const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-          const stackedActiveTetrominos = ((activeTetromino.position.y + 2) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
+          const stackedActiveTetrominos = ((activeTetromino.position.y + activeTetromino.height) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
     
           const stackedOnTetrominos = stackedTetrominos.some((stacked) => {
                 return activeTetromino.shape.some((activeShape) => {
@@ -93,10 +95,10 @@ class Movement implements Action {
           }
     
           if (stackedActiveTetrominos || stackedOnTetrominos) {
-            const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
+            const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0}, 2, 2)
             return {...s, tetrominos: [...s.tetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1}
           } else {
-              if ((activeTetromino.position.x + this.x) * Block.WIDTH < 0 || (activeTetromino.position.x + this.x + 2) * Block.WIDTH > Viewport.CANVAS_WIDTH) {
+              if ((activeTetromino.position.x + this.x) * Block.WIDTH < 0 || (activeTetromino.position.x + this.x + activeTetromino.width) * Block.WIDTH > Viewport.CANVAS_WIDTH) {
                 return s
               } else {
                 activeTetromino.position.x += this.x
