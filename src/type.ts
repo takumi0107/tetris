@@ -34,8 +34,6 @@ type Tetromino = Readonly<{
     shape: Position[]
     color: String
     position: Position
-    height: number
-    width: number
 }>
 
 
