@@ -84,7 +84,8 @@ const render = (s: State) => {
     const childrenToRemove = Array.from(svg.children).filter(child => child != gameover);
     childrenToRemove.forEach(child => svg.removeChild(child));
 
-    scoreText.textContent = s.score.toString()
+    scoreText.textContent = s.currentScore.toString()
+    highScoreText.textContent = s.highScore.toString()
     s.tetrominos.forEach(tetromino=> {
       tetromino.shape.map((shape_pos) => {
           const cube = createSvgElement(svg.namespaceURI, "rect", {

@@ -12,10 +12,11 @@ const initialState: State = {
     gameEnd: false,
     tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "green", {x: 0, y: -1})],
     activeTetrominoId: 1,
-    score: 0
+    currentScore: 0,
+    highScore: 0
 } as const;
 
-const checkRow = (activeHight: number, AllTetrominos: Tetromino[], activeTetromino: Tetromino) => {
+const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], activeTetromino: Tetromino) => {
   const deleteRows = Array.from({ length: activeHight }, (v, i) => {
     const matchingShapePos = AllTetrominos
     .flatMap((tetromino) =>  // I refere to chatgpt here, i asked "how to do filter position of tetromino in chekRowTetrominos"
@@ -67,6 +68,16 @@ const tetrominosExceeded = (stackedTetrominos: Tetromino[]) => {
   );
 }
 
+const whenStack = (s: State, activeTetromino: Tetromino, AllTetrominos: Tetromino[], activeHight: number) => {
+  const checkedAndDeleteResult = checAndDeletekRow(activeHight, AllTetrominos, activeTetromino)
+  const checkedTetrominos = checkedAndDeleteResult.filteredNewTetrominos
+  const delRowsNum = checkedAndDeleteResult.delRowsNum
+  const currentScore = s.currentScore + delRowsNum * 100
+  const highScore = currentScore > s.highScore? currentScore : s.highScore
+  const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
+  return {...s, tetrominos: [...checkedTetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1, currentScore: currentScore, highScore: highScore}
+}
+
 class Tick implements Action {
     constructor() {}
       /** 
@@ -87,14 +98,9 @@ class Tick implements Action {
             }
   
             if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino)) {
-              const checkedResult = checkRow(activeHight, AllTetrominos, activeTetromino)
-              const checkedTetrominos = checkedResult.filteredNewTetrominos
-              const delRowsNum = checkedResult.delRowsNum
-              const score = s.score + delRowsNum * 100
-              const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
-              return {...s, tetrominos: [...checkedTetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1, score: score}
+              return whenStack(s, activeTetromino, AllTetrominos, activeHight)
             } else {
-                activeTetromino.position.y = activeTetromino.position.y + 1
+              activeTetromino.position.y = activeTetromino.position.y + 1
               return s
             }
           }
@@ -119,12 +125,7 @@ class Movement implements Action {
           }
     
           if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino)) {
-            const checkedResult = checkRow(activeHight, AllTetrominos, activeTetromino)
-            const checkedTetrominos = checkedResult.filteredNewTetrominos
-            const delRowsNum = checkedResult.delRowsNum
-            const score = s.score + delRowsNum * 100
-            const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
-            return {...s, tetrominos: [...checkedTetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1, score: score}
+            return whenStack(s, activeTetromino, AllTetrominos, activeHight)
           } else {
               if ((activeTetromino.position.x + this.x) * Block.WIDTH < 0 || (activeTetromino.position.x + this.x + activeWidth) * Block.WIDTH > Viewport.CANVAS_WIDTH) {
                 return s
