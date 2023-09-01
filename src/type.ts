@@ -41,6 +41,7 @@ type State = Readonly<{
     gameEnd: boolean;
     tetrominos: ReadonlyArray<Tetromino>
     activeTetrominoId: number
+    score: number
 }>;
 
 interface Action {
