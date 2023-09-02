@@ -27,7 +27,7 @@ type Key = "KeyS" | "KeyA" | "KeyD" | "KeyW" | "KeyR";
 
 type Event = "keydown" | "keyup" | "keypress";
 
-type Position = { x: number; y: number };
+type Position = Readonly<{ x: number; y: number }>;
 
 type Tetromino = Readonly<{
     id: number

@@ -39,14 +39,16 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
     return { ...tetromino, shape: newShape };
   });
   const filteredNewTetrominos = newTetrominos.filter((tetromino) => tetromino.shape.length != 0);
-  filteredNewTetrominos.map((tetromino) => {
+  const filteredDropedTetrominos = filteredNewTetrominos.map((tetromino) => {
     const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
     while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
-      tetromino.position.y = tetromino.position.y + 1
+      const newPosition = { x: tetromino.position.x, y: tetromino.position.y + 1 };
+      tetromino = { ...tetromino, position: newPosition };
     }
+    return tetromino
   })
   const delRowsNum = deleteRows.filter(row => row != undefined).length
-  return {filteredNewTetrominos: filteredNewTetrominos, delRowsNum: delRowsNum}
+  return {filteredNewTetrominos: filteredDropedTetrominos, delRowsNum: delRowsNum}
 }
 
 const stackedActiveTetrominos = (activeTetromino: Tetromino, hight: number) => {
@@ -114,8 +116,8 @@ class Tick implements Action {
             if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino)) {
               return whenStack(s, activeTetromino, AllTetrominos, activeHight)
             } else {
-              activeTetromino.position.y = activeTetromino.position.y + 1
-              return s
+              return {...s, 
+                tetrominos: [...stackedTetrominos, {...activeTetromino, position: {x: activeTetromino.position.x, y: activeTetromino.position.y + 1}}]}
             }
           }
         }
@@ -144,11 +146,10 @@ class Movement implements Action {
               if (widthExceeded(activeTetromino, activeWidth, this.x)) {
                 return s
               } else {
-                activeTetromino.position.x += this.x
-                activeTetromino.position.y += this.y
+                return {...s, 
+                  tetrominos: [...stackedTetrominos, {...activeTetromino, position: {x: activeTetromino.position.x + this.x, y: activeTetromino.position.y + this.y}}]}
               }
           }
-          return s
         }
       }
       return s
@@ -174,11 +175,14 @@ class Rotation implements Action {
         })
         
         if (!rotateImpossible) {
-          activeTetromino.shape.map((shape) => {
+          const newShape =activeTetromino.shape.map((shape) => {
             const tempX = shape.x
-            shape.x = activeShapeHight - shape.y
-            shape.y = tempX
+            return {
+              x: activeShapeHight - shape.y,
+              y: tempX
+            }
           })
+          return {...s, tetrominos: [...stackedTetrominos, {...activeTetromino, shape: newShape}]}
         }
         
         
