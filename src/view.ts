@@ -99,17 +99,6 @@ const render = (s: State) => {
       })
     })
 
-    // Add blocks to the main grid canvas
-    // const cube = createSvgElement(svg.namespaceURI, "rect", {
-    //   height: `${Block.HEIGHT}`,
-    //   width: `${Block.WIDTH}`,
-    //   x: "0",
-    //   y: "0",
-    //   style: "fill: green",
-    // });
-    // svg.appendChild(cube);
-
-    // Add a block to the preview canvas
     const cubePreview = createSvgElement(preview.namespaceURI, "rect", {
       height: `${Block.HEIGHT}`,
       width: `${Block.WIDTH}`,

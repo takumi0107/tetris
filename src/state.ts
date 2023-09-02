@@ -1,4 +1,4 @@
-export { initialState, reduceState, Tick, Movement, Rotation}
+export { initialState, reduceState, Tick, Movement, Rotation, Reset}
 import {State, Action, Viewport, Block, Tetromino, Position} from "./type.ts" 
 
 const createTetorimino = (id: number, shape: Position[], color: String, position: {x: number, y: number}) : Tetromino => ({
@@ -39,7 +39,7 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
     return { ...tetromino, shape: newShape };
   });
   const filteredNewTetrominos = newTetrominos.filter((tetromino) => tetromino.shape.length != 0);
-  filteredNewTetrominos.forEach((tetromino) => {
+  filteredNewTetrominos.map((tetromino) => {
     const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
     while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
       tetromino.position.y = tetromino.position.y + 1
@@ -174,7 +174,7 @@ class Rotation implements Action {
         })
         
         if (!rotateImpossible) {
-          activeTetromino.shape.forEach((shape) => {
+          activeTetromino.shape.map((shape) => {
             const tempX = shape.x
             shape.x = activeShapeHight - shape.y
             shape.y = tempX
@@ -183,6 +183,16 @@ class Rotation implements Action {
         
         
       }
+    }
+    return s
+  }
+}
+
+class Reset implements Action {
+  constructor() {};
+  apply(s: State):State {
+    if (s.gameEnd) {
+      return {...initialState, tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 0} , {x: 1, y: 1}], "green", {x: 0, y: -1})]}
     }
     return s
   }
