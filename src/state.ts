@@ -12,6 +12,8 @@ const initialState: State = {
     gameEnd: false,
     tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 0} , {x: 1, y: 1}], "green", {x: 0, y: -1})],
     activeTetrominoId: 1,
+    previewTetromino:  createTetorimino(2, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 1} , {x: 2, y: 1}], "yellow", {x: 0, y: -1}),
+    previewTetrominoId: 2,
     currentScore: 0,
     highScore: 0
 } as const;
@@ -39,6 +41,7 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
     return { ...tetromino, shape: newShape };
   });
   const filteredNewTetrominos = newTetrominos.filter((tetromino) => tetromino.shape.length != 0);
+
   const filteredDropedTetrominos = filteredNewTetrominos.map((tetromino) => {
     const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
     while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
@@ -90,8 +93,13 @@ const whenStack = (s: State, activeTetromino: Tetromino, AllTetrominos: Tetromin
   const delRowsNum = checkedAndDeleteResult.delRowsNum
   const currentScore = s.currentScore + delRowsNum * 100
   const highScore = currentScore > s.highScore? currentScore : s.highScore
-  const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 2, y: 2}], "blue", {x: 0, y: -1})
-  return {...s, tetrominos: [...checkedTetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1, currentScore: currentScore, highScore: highScore}
+  const newTetromino = createTetorimino(s.previewTetrominoId + 1, [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 2, y: 2}], "blue", {x: 0, y: -1})
+  return {...s, 
+    tetrominos: [...checkedTetrominos, s.previewTetromino], 
+    activeTetrominoId: s.activeTetrominoId + 1, 
+    previewTetromino: newTetromino, 
+    previewTetrominoId: s.previewTetrominoId + 1,
+    currentScore: currentScore, highScore: highScore}
 }
 
 class Tick implements Action {

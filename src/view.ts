@@ -87,7 +87,7 @@ const render = (s: State) => {
     scoreText.textContent = s.currentScore.toString()
     highScoreText.textContent = s.highScore.toString()
     s.tetrominos.forEach(tetromino=> {
-      tetromino.shape.map((shape_pos) => {
+      tetromino.shape.forEach((shape_pos) => {
           const cube = createSvgElement(svg.namespaceURI, "rect", {
             height: `${Block.HEIGHT}`,
             width: `${Block.WIDTH}`,
@@ -99,14 +99,24 @@ const render = (s: State) => {
       })
     })
 
-    const cubePreview = createSvgElement(preview.namespaceURI, "rect", {
-      height: `${Block.HEIGHT}`,
-      width: `${Block.WIDTH}`,
-      x: `${Block.WIDTH * 2}`,
-      y: `${Block.HEIGHT}`,
-      style: "fill: green",
-    });
-    preview.appendChild(cubePreview);
+    s.previewTetromino.shape.forEach((shape_pos) => {
+      const cubePreview = createSvgElement(svg.namespaceURI, "rect", {
+        height: `${Block.HEIGHT}`,
+        width: `${Block.WIDTH}`,
+        x: `${(shape_pos.x + s.previewTetromino.position.x + 2) * Block.WIDTH}`,
+        y: `${(shape_pos.y + s.previewTetromino.position.y + 2) * Block.HEIGHT}`,
+        style: "fill: green"
+      })
+      preview.appendChild(cubePreview);
+    })
+    // const cubePreview = createSvgElement(preview.namespaceURI, "rect", {
+    //   height: `${Block.HEIGHT}`,
+    //   width: `${Block.WIDTH}`,
+    //   x: `${(s.previewTetromino.shape.x + s.previewTetromino.position.x) * Block.WIDTH * 2}`,
+    //   y: `${Block.HEIGHT}`,
+    //   style: "fill: green",
+    // });
+    
 
     if(s.gameEnd) {
       show(gameover)
