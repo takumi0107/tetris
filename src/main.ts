@@ -16,7 +16,7 @@ import "./style.css";
 
 import { fromEvent, interval, merge, Observable, Subscription } from "rxjs";
 import { map, filter, scan } from "rxjs/operators";
-import { Tick, initialState, reduceState, Movement} from './state';
+import { Tick, initialState, reduceState, Movement, Rotation} from './state';
 import {Viewport, Constants, Block, Key, Event, State, Action} from './type'
 import {render, gameover, show, hide} from './view'
 
@@ -36,6 +36,7 @@ export function main() {
   const left$ = fromKey("KeyA").pipe(map(_ => new Movement(-1, 0)));
   const right$ = fromKey("KeyD").pipe(map(_ => new Movement(1, 0)));
   const down$ = fromKey("KeyS").pipe(map(_ => new Movement(0, 1)));
+  const rotation$ = fromKey("KeyW").pipe(map(_ => new Rotation()));
 
   const movement$ = merge(left$, right$, down$)
 
@@ -43,7 +44,7 @@ export function main() {
    const tick$ = interval(Constants.TICK_RATE_MS).pipe(map(elapsed => new Tick()))
 
   /** Observables */
-  const event$ : Observable<Action> = merge(tick$, movement$)
+  const event$ : Observable<Action> = merge(tick$, movement$, rotation$)
   const state$ : Observable<State> = event$.pipe(scan(reduceState, initialState))
   const subscription: Subscription = state$.subscribe(render)
 }

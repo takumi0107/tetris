@@ -1,4 +1,4 @@
-export { initialState, reduceState, Tick, Movement}
+export { initialState, reduceState, Tick, Movement, Rotation}
 import {State, Action, Viewport, Block, Tetromino, Position} from "./type.ts" 
 
 const createTetorimino = (id: number, shape: Position[], color: String, position: {x: number, y: number}) : Tetromino => ({
@@ -10,7 +10,7 @@ const createTetorimino = (id: number, shape: Position[], color: String, position
 
 const initialState: State = {
     gameEnd: false,
-    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "green", {x: 0, y: -1})],
+    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 1} , {x: 1, y: 2}], "green", {x: 0, y: -1})],
     activeTetrominoId: 1,
     currentScore: 0,
     highScore: 0
@@ -43,8 +43,8 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
   return {filteredNewTetrominos: filteredNewTetrominos, delRowsNum: delRowsNum}
 }
 
-const stackedActiveTetrominos = (activeTetromino: Tetromino, activeHight: number) => {
-   return ((activeTetromino.position.y + activeHight) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
+const stackedActiveTetrominos = (activeTetromino: Tetromino, hight: number) => {
+   return ((activeTetromino.position.y + hight) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
 }
 
 const stackedOnTetrominos = (stackedTetrominos: Tetromino[], activeTetromino: Tetromino) => {
@@ -58,6 +58,11 @@ const stackedOnTetrominos = (stackedTetrominos: Tetromino[], activeTetromino: Te
       })
     })
   })
+}
+
+const widthExceeded = (activeTetromino: Tetromino, width: number, addWidth: number) => {
+  return ((activeTetromino.position.x + addWidth) * Block.WIDTH < 0 || 
+  (activeTetromino.position.x + addWidth + width) * Block.WIDTH > Viewport.CANVAS_WIDTH)
 }
 
 const tetrominosExceeded = (stackedTetrominos: Tetromino[]) => {
@@ -74,7 +79,7 @@ const whenStack = (s: State, activeTetromino: Tetromino, AllTetrominos: Tetromin
   const delRowsNum = checkedAndDeleteResult.delRowsNum
   const currentScore = s.currentScore + delRowsNum * 100
   const highScore = currentScore > s.highScore? currentScore : s.highScore
-  const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}], "blue", {x: 0, y: 0})
+  const newTetromino = createTetorimino(s.activeTetrominoId + 1, [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 2, y: 2}], "blue", {x: 0, y: -1})
   return {...s, tetrominos: [...checkedTetrominos, newTetromino], activeTetrominoId: s.activeTetrominoId + 1, currentScore: currentScore, highScore: highScore}
 }
 
@@ -127,7 +132,7 @@ class Movement implements Action {
           if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino)) {
             return whenStack(s, activeTetromino, AllTetrominos, activeHight)
           } else {
-              if ((activeTetromino.position.x + this.x) * Block.WIDTH < 0 || (activeTetromino.position.x + this.x + activeWidth) * Block.WIDTH > Viewport.CANVAS_WIDTH) {
+              if (widthExceeded(activeTetromino, activeWidth, this.x)) {
                 return s
               } else {
                 activeTetromino.position.x += this.x
@@ -141,4 +146,36 @@ class Movement implements Action {
     }
 }
 
+class Rotation implements Action {
+  //  Super rotation system
+  constructor() {};
+  apply(s: State):State {
+    if (!s.gameEnd) {
+      const activeTetromino = s.tetrominos.find((tetromino) => tetromino.id == s.activeTetrominoId)
+      if (activeTetromino) {
+        const activeShapeHight = activeTetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0)
+        const activeShapeWidth = activeTetromino.shape.reduce((maxX, crr) => Math.max(maxX, crr.x), 0)
+        const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
+        const AllTetrominos = stackedTetrominos.concat(activeTetromino)
+
+        const rotateImpossible = activeTetromino.shape.some((shape) => {
+          const newX = activeShapeHight - shape.y
+          const newY = shape.x
+          return stackedActiveTetrominos(activeTetromino, newY) || stackedOnTetrominos(stackedTetrominos, activeTetromino) || widthExceeded(activeTetromino, activeShapeWidth, newX)
+        })
+        
+        if (!rotateImpossible) {
+          activeTetromino.shape.forEach((shape) => {
+            const tempX = shape.x
+            shape.x = activeShapeHight - shape.y
+            shape.y = tempX
+          })
+        }
+        
+        
+      }
+    }
+    return s
+  }
+}
 const reduceState = (s: State, action: Action) => action.apply(s);

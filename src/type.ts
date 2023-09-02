@@ -23,7 +23,7 @@ const Block = {
 
 /** User input */
 
-type Key = "KeyS" | "KeyA" | "KeyD";
+type Key = "KeyS" | "KeyA" | "KeyD" | "KeyW";
 
 type Event = "keydown" | "keyup" | "keypress";
 
