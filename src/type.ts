@@ -45,6 +45,8 @@ type State = Readonly<{
     previewTetrominoId: number
     currentScore: number
     highScore: number
+    gameTime: number
+    hashVal: number
 }>;
 
 interface Action {

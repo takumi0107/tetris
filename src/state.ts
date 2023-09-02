@@ -1,22 +1,11 @@
 export { initialState, reduceState, Tick, Movement, Rotation, Reset}
+import { pipe, scan, map } from "rxjs";
 import {State, Action, Viewport, Block, Tetromino, Position} from "./type.ts" 
+import { RNG, RandomBlock } from "./util.ts";
 
-const createTetorimino = (id: number, shape: Position[], color: String, position: {x: number, y: number}) : Tetromino => ({
-  id: id,
-  shape: shape,
-  color: color,
-  position: position,
-})
+const randomBlock = new RandomBlock()
 
-const initialState: State = {
-    gameEnd: false,
-    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 0} , {x: 1, y: 1}], "green", {x: 0, y: -1})],
-    activeTetrominoId: 1,
-    previewTetromino:  createTetorimino(2, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 1} , {x: 2, y: 1}], "yellow", {x: 0, y: -1}),
-    previewTetrominoId: 2,
-    currentScore: 0,
-    highScore: 0
-} as const;
+const initialState = randomBlock.createInitialState(1)
 
 const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], activeTetromino: Tetromino) => {
   const deleteRows = Array.from({ length: activeHight }, (v, i) => {
@@ -34,6 +23,9 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
       return deleteRow
     }
   });
+
+  const delRowsNum = deleteRows.filter(row => row != undefined).length
+
   const newTetrominos = AllTetrominos.map((tetromino) => {
     const newShape = tetromino.shape.filter(
         (shapePos) => !deleteRows.includes(shapePos.y + tetromino.position.y)
@@ -42,15 +34,23 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
   });
   const filteredNewTetrominos = newTetrominos.filter((tetromino) => tetromino.shape.length != 0);
 
-  const filteredDropedTetrominos = filteredNewTetrominos.map((tetromino) => {
+  // const filteredDropedTetrominos = filteredNewTetrominos.map((tetromino) => {
+  //   const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
+  //   while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
+  //     const newPosition = { x: tetromino.position.x, y: tetromino.position.y + 1 };
+  //     tetromino = { ...tetromino, position: newPosition };
+  //   }
+  //   return tetromino
+  // })
+
+    const filteredDropedTetrominos = filteredNewTetrominos.reduce((acc: Tetromino[], tetromino: Tetromino) => {
     const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
-    while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
-      const newPosition = { x: tetromino.position.x, y: tetromino.position.y + 1 };
-      tetromino = { ...tetromino, position: newPosition };
+    while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(acc, tetromino))) {
+      const newPosition = { x: tetromino.position.x, y: tetromino.position.y + 1 }
+      tetromino = { ...tetromino, position: newPosition }
     }
-    return tetromino
-  })
-  const delRowsNum = deleteRows.filter(row => row != undefined).length
+    return [...acc, tetromino]
+  }, [])
   return {filteredNewTetrominos: filteredDropedTetrominos, delRowsNum: delRowsNum}
 }
 
@@ -64,6 +64,12 @@ const stackedOnTetrominos = (stackedTetrominos: Tetromino[], activeTetromino: Te
       return stacked.shape.some((stackedShape) => {
         if (activeTetromino.id == stacked.id) {
           return false
+        }
+        if(activeTetromino.color == "green" && activeShape.x + activeTetromino.position.x == stackedShape.x + stacked.position.x && 
+        activeShape.y + activeTetromino.position.y + 1 == stackedShape.y + stacked.position.y) {
+          const stackedHight = stacked.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
+          console.log(stackedActiveTetrominos(stacked, stackedHight))
+          console.log("^")
         }
         return (
           activeShape.x + activeTetromino.position.x == stackedShape.x + stacked.position.x && 
@@ -93,13 +99,17 @@ const whenStack = (s: State, activeTetromino: Tetromino, AllTetrominos: Tetromin
   const delRowsNum = checkedAndDeleteResult.delRowsNum
   const currentScore = s.currentScore + delRowsNum * 100
   const highScore = currentScore > s.highScore? currentScore : s.highScore
-  const newTetromino = createTetorimino(s.previewTetrominoId + 1, [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 2, y: 2}], "blue", {x: 0, y: -1})
-  return {...s, 
+  const newHash = RNG.hash(s.hashVal)
+  const newTetromino = randomBlock.createRandomBlock(s.previewTetrominoId + 1, newHash)
+  return {
+    ...s, 
     tetrominos: [...checkedTetrominos, s.previewTetromino], 
     activeTetrominoId: s.activeTetrominoId + 1, 
     previewTetromino: newTetromino, 
     previewTetrominoId: s.previewTetrominoId + 1,
-    currentScore: currentScore, highScore: highScore}
+    currentScore: currentScore, highScore: highScore,
+    hashVal: newHash
+  }
 }
 
 class Tick implements Action {
@@ -204,7 +214,7 @@ class Reset implements Action {
   constructor() {};
   apply(s: State):State {
     if (s.gameEnd) {
-      return {...initialState, tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 0} , {x: 1, y: 1}], "green", {x: 0, y: -1})]}
+      return randomBlock.createInitialState(s.gameTime + 1)
     }
     return s
   }

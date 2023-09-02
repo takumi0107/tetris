@@ -94,7 +94,7 @@ const render = (s: State) => {
             width: `${Block.WIDTH}`,
             x: `${(shape_pos.x + tetromino.position.x) * Block.WIDTH}`,
             y: `${(shape_pos.y + tetromino.position.y) * Block.HEIGHT}`,
-            style: "fill: green"
+            style: `fill: ${tetromino.color}`
           })
           svg.appendChild(cube);
       })
@@ -104,9 +104,9 @@ const render = (s: State) => {
       const cubePreview = createSvgElement(svg.namespaceURI, "rect", {
         height: `${Block.HEIGHT}`,
         width: `${Block.WIDTH}`,
-        x: `${(shape_pos.x + s.previewTetromino.position.x + 2) * Block.WIDTH}`,
-        y: `${(shape_pos.y + s.previewTetromino.position.y + 2) * Block.HEIGHT}`,
-        style: "fill: green"
+        x: `${(shape_pos.x + 2) * Block.WIDTH}`,
+        y: `${(shape_pos.y + 1) * Block.HEIGHT}`,
+        style: `fill: ${s.previewTetromino.color}`
       })
       preview.appendChild(cubePreview);
     })
