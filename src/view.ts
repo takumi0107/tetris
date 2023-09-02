@@ -83,6 +83,7 @@ const render = (s: State) => {
     // svg.innerHTML = ''
     const childrenToRemove = Array.from(svg.children).filter(child => child != gameover);
     childrenToRemove.forEach(child => svg.removeChild(child));
+    preview.innerHTML = ''
 
     scoreText.textContent = s.currentScore.toString()
     highScoreText.textContent = s.highScore.toString()
