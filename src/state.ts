@@ -10,7 +10,7 @@ const createTetorimino = (id: number, shape: Position[], color: String, position
 
 const initialState: State = {
     gameEnd: false,
-    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 1} , {x: 1, y: 2}], "green", {x: 0, y: -1})],
+    tetrominos: [createTetorimino(1, [{x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 0} , {x: 1, y: 1}], "green", {x: 0, y: -1})],
     activeTetrominoId: 1,
     currentScore: 0,
     highScore: 0
@@ -39,21 +39,30 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
     return { ...tetromino, shape: newShape };
   });
   const filteredNewTetrominos = newTetrominos.filter((tetromino) => tetromino.shape.length != 0);
+  filteredNewTetrominos.forEach((tetromino) => {
+    const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
+    while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
+      tetromino.position.y = tetromino.position.y + 1
+    }
+  })
   const delRowsNum = deleteRows.filter(row => row != undefined).length
   return {filteredNewTetrominos: filteredNewTetrominos, delRowsNum: delRowsNum}
 }
 
 const stackedActiveTetrominos = (activeTetromino: Tetromino, hight: number) => {
-   return ((activeTetromino.position.y + hight) * Block.HEIGHT) == Viewport.CANVAS_HEIGHT
+   return ((activeTetromino.position.y + hight) * Block.HEIGHT) >= Viewport.CANVAS_HEIGHT
 }
 
 const stackedOnTetrominos = (stackedTetrominos: Tetromino[], activeTetromino: Tetromino) => {
   return stackedTetrominos.some((stacked) => {
     return activeTetromino.shape.some((activeShape) => {
       return stacked.shape.some((stackedShape) => {
+        if (activeTetromino.id == stacked.id) {
+          return false
+        }
         return (
-          activeShape.x + activeTetromino.position.x === stackedShape.x + stacked.position.x && 
-          activeShape.y + activeTetromino.position.y + 1 === stackedShape.y + stacked.position.y
+          activeShape.x + activeTetromino.position.x == stackedShape.x + stacked.position.x && 
+          activeShape.y + activeTetromino.position.y + 1 == stackedShape.y + stacked.position.y
           )
       })
     })
