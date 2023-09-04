@@ -1,16 +1,4 @@
-/**
- * Inside this file you will use the classes and functions from rx.js
- * to add visuals to the svg element in index.html, animate them, and make them interactive.
- *
- * Study and complete the tasks in observable exercises first to get ideas.
- *
- * Course Notes showing Asteroids in FRP: https://tgdwyer.github.io/asteroids/
- *
- * You will be marked on your functional programming style
- * as well as the functionality that you implement.
- *
- * Document your code!
- */
+
 
 import "./style.css";
 
@@ -28,11 +16,14 @@ export function main() {
 
   /** User input */
 
+  // Create an observable for keyboard events.
   const key$ = fromEvent<KeyboardEvent>(document, "keypress");
 
+  // Define observables for key events.
   const fromKey = (keyCode: Key) =>
     key$.pipe(filter(({ code }) => code === keyCode));
 
+  // Observables for movement and rotation by key.
   const left$ = fromKey("KeyA").pipe(map(_ => new Movement(-1, 0)));
   const right$ = fromKey("KeyD").pipe(map(_ => new Movement(1, 0)));
   const down$ = fromKey("KeyS").pipe(map(_ => new Movement(0, 1)));
@@ -45,8 +36,12 @@ export function main() {
    const tick$ = interval(Constants.TICK_RATE_MS).pipe(map(elapsed => new Tick()))
 
   /** Observables */
+
+  // Create an observable by mergig game events.
   const event$ : Observable<Action> = merge(tick$, movement$, rotation$, reset$)
+  //process game events.
   const state$ : Observable<State> = event$.pipe(scan(reduceState, initialState))
+  // Subscribe to the state observable to render the game visuals.
   const subscription: Subscription = state$.subscribe(render)
 }
 

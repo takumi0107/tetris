@@ -16,7 +16,7 @@ abstract class RNG {
     public static hash = (seed: number) => (RNG.a * seed + RNG.c) % RNG.m;
   
     /**
-     * Takes hash value and scales it to the range [-1, 1]
+     * Takes hash value and scales it to the range [0..range]
      */
     public static scale = (hash: number, range: number) => (range * hash) / (RNG.m - 1);
 }
@@ -54,7 +54,11 @@ class RandomBlock {
     }
 
     /**
-     * createRandomBlock
+     * Generates a random Tetromino block with a specified ID and seed.
+     *
+     * @param id - The unique identifier for the generated Tetromino.
+     * @param seed - The seed value used for random block and color selection.
+     * @returns A randomly generated Tetromino block.
      */
     public createRandomBlock(id: number, seed: number): Tetromino {
         const randomBlockNum = Math.abs(Math.floor((RNG.scale(RNG.hash(seed), this.blocks.length - 1))))
@@ -68,6 +72,12 @@ class RandomBlock {
         }
     } 
 
+    /**
+     * Creates the initial game state with the specified game time.
+     *
+     * @param gameTime - The current game time used as part of the seed for randomness.
+     * @returns The initial game state.
+     */
     public createInitialState(gameTime: number): State {
         const initialState: State = {
             gameEnd: false,
@@ -85,6 +95,14 @@ class RandomBlock {
         return initialState
     }
 
+    /**
+     * Generates a random obstacle shape for the game with the specified ID, seed, and vertical position.
+     *
+     * @param id - The unique identifier for the generated obstacle shape.
+     * @param seed - The seed value used for random obstacle shape selection.
+     * @param yPos - The vertical position (y-coordinate) at which the obstacle shape is placed.
+     * @returns A randomly generated obstacle Tetromino.
+     */
     public randomObsShape(id: number, seed: number, yPos: number): Tetromino {
         const randomObsShape = Math.abs(Math.floor((RNG.scale(RNG.hash(seed), this.obsBlocks.length - 1))))
 

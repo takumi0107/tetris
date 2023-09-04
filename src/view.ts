@@ -58,20 +58,7 @@ const show = (elem: SVGGraphicsElement) => {
    */
 const hide = (elem: SVGGraphicsElement) =>
   elem.setAttribute("visibility", "hidden");
-class Floor {
-  private floorBlocks: Set<string>;
-  constructor() {
-    this.floorBlocks = new Set(); 
-  }
 
-  addBlock(x: number, y: number) {
-    this.floorBlocks.add(`${x},${y}`);
-  }
-
-  isPartOfFloor(x: number, y: number) {
-    return this.floorBlocks.has(`${x},${y}`);
-  }
-}
 /**
  * Renders the current state to the canvas.
  *
@@ -80,14 +67,18 @@ class Floor {
  * @param s Current state
  */
 const render = (s: State) => {
-    // svg.innerHTML = ''
+    // Remove all children from the SVG element except for the 'gameover' element.
     const childrenToRemove = Array.from(svg.children).filter(child => child != gameover);
     childrenToRemove.forEach(child => svg.removeChild(child));
+    // Clear the Tetromino preview element.
     preview.innerHTML = ''
 
+    // Update the displayed score, high score, and level.
     scoreText.textContent = s.currentScore.toString()
     highScoreText.textContent = s.highScore.toString()
     levelText.textContent = s.level.toString()
+
+    // Render Tetrominos on the game board.
     s.tetrominos.forEach(tetromino=> {
       tetromino.shape.forEach((shape_pos) => {
           const cube = createSvgElement(svg.namespaceURI, "rect", {
@@ -101,6 +92,7 @@ const render = (s: State) => {
       })
     })
 
+    // Render Tetrominos on the preview.
     s.previewTetromino.shape.forEach((shape_pos) => {
       const cubePreview = createSvgElement(svg.namespaceURI, "rect", {
         height: `${Block.HEIGHT}`,
@@ -111,15 +103,7 @@ const render = (s: State) => {
       })
       preview.appendChild(cubePreview);
     })
-    // const cubePreview = createSvgElement(preview.namespaceURI, "rect", {
-    //   height: `${Block.HEIGHT}`,
-    //   width: `${Block.WIDTH}`,
-    //   x: `${(s.previewTetromino.shape.x + s.previewTetromino.position.x) * Block.WIDTH * 2}`,
-    //   y: `${Block.HEIGHT}`,
-    //   style: "fill: green",
-    // });
     
-
     if(s.gameEnd) {
       show(gameover)
     } else {
