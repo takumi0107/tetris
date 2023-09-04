@@ -87,6 +87,7 @@ const render = (s: State) => {
 
     scoreText.textContent = s.currentScore.toString()
     highScoreText.textContent = s.highScore.toString()
+    levelText.textContent = s.level.toString()
     s.tetrominos.forEach(tetromino=> {
       tetromino.shape.forEach((shape_pos) => {
           const cube = createSvgElement(svg.namespaceURI, "rect", {

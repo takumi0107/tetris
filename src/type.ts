@@ -47,6 +47,8 @@ type State = Readonly<{
     highScore: number
     gameTime: number
     hashVal: number
+    level: number
+    levelRows: number
 }>;
 
 interface Action {

@@ -1,15 +1,22 @@
 export { initialState, reduceState, Tick, Movement, Rotation, Reset}
 import { pipe, scan, map } from "rxjs";
-import {State, Action, Viewport, Block, Tetromino, Position} from "./type.ts" 
+import {State, Action, Viewport, Constants, Block, Tetromino, Position} from "./type.ts" 
 import { RNG, RandomBlock } from "./util.ts";
 
 const randomBlock = new RandomBlock()
 
 const initialState = randomBlock.createInitialState(1)
 
-const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], activeTetromino: Tetromino) => {
+const createTetorimino = (id: number, shape: Position[], color: String, position: {x: number, y: number}) : Tetromino => ({
+  id: id,
+  shape: shape,
+  color: color,
+  position: position
+})
+
+const checAndDeletekRow = (s: State, activeHight: number, allTetrominos: Tetromino[], activeTetromino: Tetromino) => {
   const deleteRows = Array.from({ length: activeHight }, (v, i) => {
-    const matchingShapePos = AllTetrominos
+    const matchingShapePos = allTetrominos
     .flatMap((tetromino) =>  // I refere to chatgpt here, i asked "how to do filter position of tetromino in chekRowTetrominos"
       tetromino.shape
         .map((shapePos) => ({
@@ -26,7 +33,7 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
 
   const delRowsNum = deleteRows.filter(row => row != undefined).length
 
-  const newTetrominos = AllTetrominos.map((tetromino) => {
+  const newTetrominos = allTetrominos.map((tetromino) => {
     const newShape = tetromino.shape.filter(
         (shapePos) => !deleteRows.includes(shapePos.y + tetromino.position.y)
     );
@@ -34,24 +41,34 @@ const checAndDeletekRow = (activeHight: number, AllTetrominos: Tetromino[], acti
   });
   const filteredNewTetrominos = newTetrominos.filter((tetromino) => tetromino.shape.length != 0);
 
-  // const filteredDropedTetrominos = filteredNewTetrominos.map((tetromino) => {
-  //   const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
-  //   while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(filteredNewTetrominos, tetromino))) {
-  //     const newPosition = { x: tetromino.position.x, y: tetromino.position.y + 1 };
-  //     tetromino = { ...tetromino, position: newPosition };
-  //   }
-  //   return tetromino
-  // })
+  
+  const levelCheck = checkLevel(s, delRowsNum, filteredNewTetrominos)
+  const levelCheckedTetrominos = levelCheck.allTetrominos
 
-    const filteredDropedTetrominos = filteredNewTetrominos.reduce((acc: Tetromino[], tetromino: Tetromino) => {
+  const filteredDropedTetrominos = levelCheckedTetrominos.reduce((acc: Tetromino[], tetromino: Tetromino) => {
     const hight = tetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
     while (!(stackedActiveTetrominos(tetromino, hight) || stackedOnTetrominos(acc, tetromino))) {
       const newPosition = { x: tetromino.position.x, y: tetromino.position.y + 1 }
       tetromino = { ...tetromino, position: newPosition }
     }
-    return [...acc, tetromino]
+  return [...acc, tetromino]
   }, [])
-  return {filteredNewTetrominos: filteredDropedTetrominos, delRowsNum: delRowsNum}
+
+  return {state: levelCheck.state, filteredNewTetrominos: filteredDropedTetrominos, delRowsNum: delRowsNum}
+}
+
+const checkLevel = (s: State, delRowsNum: number, allTetrominos: Tetromino[]) => {
+  if (s.levelRows + delRowsNum >= 3) {
+    const oneLineUpTetrominos = allTetrominos.map((tetromino) => {
+      return {...tetromino, position: {x: tetromino.position.x, y: tetromino.position.y - 1}}
+    })
+    const obstacleLine = [randomBlock.randomObsShape(0-s.level, s.hashVal, 20 - s.level)]
+    const obsOneUpTetrominos = obstacleLine.concat(oneLineUpTetrominos)
+    const newState = {...s, level: s.level + 1, levelRows: 0}
+    return {state: newState, allTetrominos: obsOneUpTetrominos}
+  }
+  const newState = {...s, levelRows: delRowsNum}
+  return {state: newState, allTetrominos: allTetrominos}
 }
 
 const stackedActiveTetrominos = (activeTetromino: Tetromino, hight: number) => {
@@ -64,12 +81,6 @@ const stackedOnTetrominos = (stackedTetrominos: Tetromino[], activeTetromino: Te
       return stacked.shape.some((stackedShape) => {
         if (activeTetromino.id == stacked.id) {
           return false
-        }
-        if(activeTetromino.color == "green" && activeShape.x + activeTetromino.position.x == stackedShape.x + stacked.position.x && 
-        activeShape.y + activeTetromino.position.y + 1 == stackedShape.y + stacked.position.y) {
-          const stackedHight = stacked.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
-          console.log(stackedActiveTetrominos(stacked, stackedHight))
-          console.log("^")
         }
         return (
           activeShape.x + activeTetromino.position.x == stackedShape.x + stacked.position.x && 
@@ -93,8 +104,8 @@ const tetrominosExceeded = (stackedTetrominos: Tetromino[]) => {
   );
 }
 
-const whenStack = (s: State, activeTetromino: Tetromino, AllTetrominos: Tetromino[], activeHight: number) => {
-  const checkedAndDeleteResult = checAndDeletekRow(activeHight, AllTetrominos, activeTetromino)
+const whenStack = (s: State, activeTetromino: Tetromino, allTetrominos: Tetromino[], activeHight: number) => {
+  const checkedAndDeleteResult = checAndDeletekRow(s, activeHight, allTetrominos, activeTetromino)
   const checkedTetrominos = checkedAndDeleteResult.filteredNewTetrominos
   const delRowsNum = checkedAndDeleteResult.delRowsNum
   const currentScore = s.currentScore + delRowsNum * 100
@@ -102,7 +113,7 @@ const whenStack = (s: State, activeTetromino: Tetromino, AllTetrominos: Tetromin
   const newHash = RNG.hash(s.hashVal)
   const newTetromino = randomBlock.createRandomBlock(s.previewTetrominoId + 1, newHash)
   return {
-    ...s, 
+    ...checkedAndDeleteResult.state, 
     tetrominos: [...checkedTetrominos, s.previewTetromino], 
     activeTetrominoId: s.activeTetrominoId + 1, 
     previewTetromino: newTetromino, 
@@ -125,14 +136,14 @@ class Tick implements Action {
           if (activeTetromino) {
             const activeHight = activeTetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
             const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-            const AllTetrominos = stackedTetrominos.concat(activeTetromino)
+            const allTetrominos = stackedTetrominos.concat(activeTetromino)
 
             if (tetrominosExceeded(stackedTetrominos)) {
               return {...s, gameEnd: true}
             }
   
             if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino)) {
-              return whenStack(s, activeTetromino, AllTetrominos, activeHight)
+              return whenStack(s, activeTetromino, allTetrominos, activeHight)
             } else {
               return {...s, 
                 tetrominos: [...stackedTetrominos, {...activeTetromino, position: {x: activeTetromino.position.x, y: activeTetromino.position.y + 1}}]}
@@ -152,14 +163,14 @@ class Movement implements Action {
           const activeHight = activeTetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
           const activeWidth = activeTetromino.shape.reduce((maxX, crr) => Math.max(maxX, crr.x), 0) + 1
           const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-          const AllTetrominos = stackedTetrominos.concat(activeTetromino)
+          const allTetrominos = stackedTetrominos.concat(activeTetromino)
     
           if (tetrominosExceeded(stackedTetrominos)) {
             return {...s, gameEnd: true}
           }
     
           if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino)) {
-            return whenStack(s, activeTetromino, AllTetrominos, activeHight)
+            return whenStack(s, activeTetromino, allTetrominos, activeHight)
           } else {
               if (widthExceeded(activeTetromino, activeWidth, this.x)) {
                 return s
@@ -184,7 +195,7 @@ class Rotation implements Action {
         const activeShapeHight = activeTetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0)
         const activeShapeWidth = activeTetromino.shape.reduce((maxX, crr) => Math.max(maxX, crr.x), 0)
         const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
-        const AllTetrominos = stackedTetrominos.concat(activeTetromino)
+        const allTetrominos = stackedTetrominos.concat(activeTetromino)
 
         const rotateImpossible = activeTetromino.shape.some((shape) => {
           const newX = activeShapeHight - shape.y
