@@ -1,4 +1,4 @@
-export { initialState, reduceState, Tick, Movement, Rotation, Reset}
+export { initialState, reduceState, Tick, Movement, Rotation, Reset, HardDrop}
 import { pipe, scan, map } from "rxjs";
 import {State, Action, Viewport, Constants, Block, Tetromino, Position} from "./type.ts" 
 import { RNG, RandomBlock } from "./util.ts";
@@ -351,6 +351,44 @@ class Reset implements Action {
     if (s.gameEnd) {
       // add one to gameTime for the sake of changing hash value
       return randomBlock.createInitialState(s.gameTime + 1)
+    }
+    return s
+  }
+}
+
+
+/**
+ * This class represents an action that performs a hard drop for the active tetromino.
+ * A hard drop involves instantly moving the active tetromino to its lowest possible position within the game grid.
+ */
+class HardDrop implements Action {
+  constructor() {};
+
+  /**
+   * Applies the hard drop action to the current game state.
+   *
+   * @param s - The current game state.
+   * @returns The updated game state after performing the hard drop action.
+   */
+  apply(s: State):State {
+    if (!s.gameEnd) {
+      const activeTetromino = s.tetrominos.find((tetromino) => tetromino.id == s.activeTetrominoId)
+      if (activeTetromino) {
+        const activeHight = activeTetromino.shape.reduce((maxY, crr) => Math.max(maxY, crr.y), 0) + 1
+        const activeWidth = activeTetromino.shape.reduce((maxX, crr) => Math.max(maxX, crr.x), 0) + 1
+        const stackedTetrominos = s.tetrominos.filter((tetromino) => tetromino.id != s.activeTetrominoId)
+        const allTetrominos = stackedTetrominos.concat(activeTetromino)
+        // Base case
+        // Check if the hard drop is possible.
+        if (stackedActiveTetrominos(activeTetromino, activeHight) || stackedOnTetrominos(stackedTetrominos, activeTetromino, 0, 1)) {
+          return s
+        } else {
+          return this.apply({...s, 
+            // Perform the hard drop by moving the tetromino down until it collides.
+            tetrominos: [...stackedTetrominos, {...activeTetromino, position: {x: activeTetromino.position.x, y: activeTetromino.position.y + 1}}]}
+          )
+        }
+        }
     }
     return s
   }

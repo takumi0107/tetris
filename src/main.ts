@@ -4,7 +4,7 @@ import "./style.css";
 
 import { fromEvent, interval, merge, Observable, Subscription } from "rxjs";
 import { map, filter, scan } from "rxjs/operators";
-import { Tick, initialState, reduceState, Movement, Rotation, Reset} from './state';
+import { Tick, initialState, reduceState, Movement, Rotation, Reset, HardDrop} from './state';
 import {Viewport, Constants, Block, Key, Event, State, Action} from './type'
 import {render, gameover, show, hide} from './view'
 
@@ -29,8 +29,9 @@ export function main() {
   const down$ = fromKey("KeyS").pipe(map(_ => new Movement(0, 1)));
   const rotation$ = fromKey("KeyW").pipe(map(_ => new Rotation()));
   const reset$ = fromKey("KeyR").pipe(map(_ => new Reset()))
+  const hardDrop$ = fromKey("Space").pipe(map(_ => new HardDrop()))
 
-  const movement$ = merge(left$, right$, down$)
+  const movement$ = merge(left$, right$, down$, hardDrop$)
 
    /** Determines the rate of time steps */
    const tick$ = interval(Constants.TICK_RATE_MS).pipe(map(elapsed => new Tick()))

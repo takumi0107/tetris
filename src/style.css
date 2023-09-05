@@ -1,5 +1,6 @@
 :root {
   background-color: rgb(161, 134, 98);
+  background-image: url(/images/background.gif);
   padding: 2em;
   padding-top: 4em;
 }
